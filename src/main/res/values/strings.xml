@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">FetchTakeHomeTest</string>
+    <string name="name">Name: %s</string>
+    <string name="listID">List ID: %s</string>
+    <string name="id">ID: %s</string>
+
 </resources>

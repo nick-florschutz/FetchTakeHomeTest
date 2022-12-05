@@ -53,7 +53,5 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        mainViewModel.getAllItems()
-
     }
 }

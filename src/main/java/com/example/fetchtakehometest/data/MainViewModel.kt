@@ -9,6 +9,7 @@ package com.example.fetchtakehometest.data
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import java.util.*
 
@@ -19,21 +20,27 @@ class MainViewModel(private val mainRepository: MainRepository): ViewModel() {
     private val loading = MutableLiveData<Boolean>()
     val itemList = MutableLiveData<List<RetrievedItem>?>()
 
+    init {
+        GlobalScope.launch {
+            getAllItems()
+        }
+    }
+
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         onError("Exception handled: ${throwable.localizedMessage}")
     }
 
     fun getAllItems() {
-        job = CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
+        job = viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             val response = mainRepository.getAllItems()
-            withContext(Dispatchers.Main) {
+            withContext(Dispatchers.Default) {
                 if (response.isSuccessful) {
                     /*
                         * return zero if object1 is equal object2
                         * a negative number if object1 is less than object2
                         * a positive number if object1 is greater than object2
                      */
-                    itemList.value = response.body()
+                    itemList.postValue(response.body()
                         ?.sortedWith(object : Comparator <RetrievedItem> {
                             override fun compare (p0: RetrievedItem, pi: RetrievedItem) : Int {
                                 if (p0.name.isNullOrEmpty()){
@@ -53,8 +60,9 @@ class MainViewModel(private val mainRepository: MainRepository): ViewModel() {
                         })
                         ?.sortedBy { it.listId }
                         ?.filter { !it.name.isNullOrEmpty() }
+                    )
 
-                    loading.value = false
+                    loading.postValue(false)
 
                 } else {
                     onError("Error : ${response.message()} ")
@@ -64,8 +72,8 @@ class MainViewModel(private val mainRepository: MainRepository): ViewModel() {
     }
 
     private fun onError(message: String) {
-        errorMessage.value = message
-        loading.value = false
+        errorMessage.postValue(message)
+        loading.postValue(false)
     }
 
     override fun onCleared() {
